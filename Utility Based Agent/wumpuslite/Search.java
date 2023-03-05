@@ -5,7 +5,7 @@ import java.util.List;
 
 class Search {
     private int[] possibleEnv = {1, 2, 99};
-	private int[] moves = {Action.NO_OP, Action.TURN_LEFT, Action.TURN_RIGHT, Action.GO_FORWARD, Action.GRAB, Action.SHOOT};
+	private int[] moves = {Action.NO_OP, Action.TURN_LEFT, Action.TURN_RIGHT, Action.GO_FORWARD, Action.SHOOT};
     private int bestMove = Action.NO_OP;
     private int maxUtility, numberOfMoves;
     String outFilename = "test.txt";
@@ -13,7 +13,11 @@ class Search {
     public Search(int[][] state, int x, int y, char direction) {
         maxUtility = 0;
         numberOfMoves = 99999;
-        dfs(new State(state, direction, x, y), 0, 0, new ArrayList<>());
+        if (state[x][y] == 99) {
+            bestMove = Action.GRAB;
+        } else {
+            dfs(new State(state, direction, x, y), 0, 0, new ArrayList<>());
+        }
     }
 
     public int nextMove() {
@@ -108,6 +112,9 @@ class Search {
                 // newState.print();
             }
         }
+        if (currState.state[x][y] == 50 || currState.state[x][y] == 99) {
+            listOfStates.add(new State(currState.state, currState.direction, x, y));
+        }
         return listOfStates;
     }
 
@@ -130,7 +137,7 @@ class Search {
         } catch (Exception e) {
 	    	System.out.println("An exception was thrown: " + e);
 	    }
-        if (depth == 5) {
+        if (depth == 3) {
             return;
         }
         for (int i = 0; i < moves.length; i++) {

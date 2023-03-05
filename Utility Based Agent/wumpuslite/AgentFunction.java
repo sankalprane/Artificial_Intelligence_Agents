@@ -59,7 +59,7 @@ class AgentFunction {
 		for (int i = 0; i < 4; i++) {
 			int new_x = x_coordinate + dir_row[i];
 			int new_y = y_coordinate + dir_col[i];
-			if (isValid(new_x, new_y) && state[new_x][new_y] != 0) {
+			if (isValid(new_x, new_y) && state[new_x][new_y] == -1) {
 				state[new_x][new_y] = 1;
 			}
 		}
@@ -76,7 +76,7 @@ class AgentFunction {
 	}
 
 	private void markGold() {
-		state[x_coordinate][y_coordinate] = 100; 
+		state[x_coordinate][y_coordinate] = 99;
 	}
 
 	private void markSafe() {
@@ -84,6 +84,7 @@ class AgentFunction {
 			int new_x = x_coordinate + dir_row[i];
 			int new_y = y_coordinate + dir_col[i];
 			if (isValid(new_x, new_y)) {
+				if (state[new_x][new_y] != 50)
 				state[new_x][new_y] = 0;
 			}
 		}
@@ -105,7 +106,7 @@ class AgentFunction {
 			for (int i = 0; i < 4; i++) {
 				int new_x = x_coordinate + dir_row[i];
 				int new_y = y_coordinate + dir_col[i];
-				if (isValid(new_x, new_y) && state[new_x][new_y] != 0) {
+				if (isValid(new_x, new_y) && state[new_x][new_y] == -1) {
 					state[new_x][new_y] = 2;
 				}
 			}
@@ -147,7 +148,7 @@ class AgentFunction {
 		 * If the state is 0 then the square is safe.
 		 * Mark the 0, 0 square as safe and visited
 		 */
-		state[0][0] = 0;
+		state[0][0] = 50;
 	}
 
 	// This function is used to update the direction on turn left
@@ -186,7 +187,7 @@ class AgentFunction {
 		} else {
 			x_coordinate -= 1;
 		}
-		state[x_coordinate][y_coordinate] = 10;
+		state[x_coordinate][y_coordinate] = 50;
     }
 
 

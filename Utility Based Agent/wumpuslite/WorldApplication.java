@@ -44,7 +44,10 @@ class WorldApplication {
 		
 	    Random rand = new Random();
 	    // int seed = rand.nextInt();
-		int seed = -1121959140;
+		// int seed = -1121959140;
+		// int seed = -2134590087;
+		// int seed = -916196900;
+		int seed = 1731461101;
 		
 	    
 		// iterate through command-line parameters

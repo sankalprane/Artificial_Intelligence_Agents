@@ -47,10 +47,12 @@ class State {
             utility += 1000;
         if (state[x][y] == 1 || state[x][y] == 2)
             utility -= 1000;
+        if (state[x][y] == 0)
+            utility += 100;
         // for (int i = 0; i < 4; i++) {
         //     for (int j = 0; j < 4; j++) {
-        //         if (state[i][j] == -1) {
-        //             utility -= 1;
+        //         if (state[i][j] == 0) {
+        //             utility += 100;
         //         }
         //     }
         // }
