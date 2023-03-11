@@ -40,6 +40,17 @@ class State {
 	    }
     }
 
+    private int utilityOfSafeSquare() {
+        int numberOfSafeSquare = 16;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (state[i][j] == 50)
+                    numberOfSafeSquare--;
+            }
+        }
+        return (1000 / numberOfSafeSquare);
+    }
+
     public int getUtility(int x, int y) {
         utility = 0;
         if (state[x][y] == 99)
@@ -47,7 +58,7 @@ class State {
         if (state[x][y] == 1 || state[x][y] == 2)
             utility -= 1000;
         if (state[x][y] == 0)
-            utility += 100;
+            utility += utilityOfSafeSquare();
         return utility;
     }
 }

@@ -17,6 +17,10 @@
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class AgentFunction {
 	
@@ -29,6 +33,8 @@ class AgentFunction {
 	// all of these variables are created and used
 	// for illustration purposes; you may delete them
 	// when implementing your own intelligent agent
+	private Set<IntPair> pitLocations = new HashSet<>();
+	private boolean pitsDiscovered = false;
 	private boolean arrowUsed = false;
 	private boolean bump;
 	private boolean glitter;
@@ -57,11 +63,22 @@ class AgentFunction {
 	 * If breeze is felt then set the state to 1 which indicates a pit
 	 */
 	private void markPit() {
+		if (pitsDiscovered == true) {
+			for (int i = 0; i < 4; i++) {
+				int new_x = x_coordinate + dir_row[i];
+				int new_y = y_coordinate + dir_col[i];
+				if (isValid(new_x, new_y) && state[new_x][new_y] == -1) {
+					state[new_x][new_y] = 0;
+				}
+			}
+			return;
+		}
 		for (int i = 0; i < 4; i++) {
 			int new_x = x_coordinate + dir_row[i];
 			int new_y = y_coordinate + dir_col[i];
-			if (isValid(new_x, new_y) && state[new_x][new_y] == -1) {
+			if (isValid(new_x, new_y) && (state[new_x][new_y] == -1 || state[new_x][new_y] == 2)) {
 				state[new_x][new_y] = 1;
+				pitLocations.add(new IntPair(new_x, new_y));
 			}
 		}
 	}
@@ -85,8 +102,11 @@ class AgentFunction {
 			int new_x = x_coordinate + dir_row[i];
 			int new_y = y_coordinate + dir_col[i];
 			if (isValid(new_x, new_y)) {
+				if (pitLocations.contains(new IntPair(new_x, new_y))) {
+					pitLocations.remove(new IntPair(new_x, new_y));
+				}
 				if (state[new_x][new_y] != 50)
-				state[new_x][new_y] = 0;
+					state[new_x][new_y] = 0;
 			}
 		}
 	}
@@ -95,7 +115,7 @@ class AgentFunction {
 	 * This functions sets the state to 2 which indicates that the square
 	 * has wumpus.
 	 */
-	private void markWumpus() {
+	private void markWumpus(boolean alsoBreeze) {
 		/* 
 		 * Since there is just one wumpus. We just have to mark the squares
 		 * as wumpus for the first time we get the stench.
@@ -121,7 +141,7 @@ class AgentFunction {
 			for (int i = 0; i < 4; i++) {
 				int new_x = x_coordinate + dir_row[i];
 				int new_y = y_coordinate + dir_col[i];
-				if (isValid(new_x, new_y) && state[new_x][new_y] == -1) {
+				if (isValid(new_x, new_y) && state[new_x][new_y] == -1 && alsoBreeze == false) {
 					state[new_x][new_y] = 0;
 				}
 			}
@@ -220,6 +240,25 @@ class AgentFunction {
 		}
 	}
 
+	private void countPits() {
+		if (pitLocations.size() >= 2) {
+			for (IntPair x : pitLocations) {
+				boolean flag = false;
+				for (IntPair y: pitLocations) {
+					if (!x.equals(y)) {
+						int distance = Math.abs(x.first - y.first) + Math.abs(x.second - y.second);
+						if (distance <= 2)
+							flag = true;
+					}
+				}
+				if (flag == false) {
+					pitsDiscovered = true;
+					return;
+				}
+			}
+		}
+	}
+
 
 	public int process(TransferPercept tp)
 	{
@@ -227,7 +266,6 @@ class AgentFunction {
 		// all code below this comment block. You have
 		// access to all percepts through the object
 		// 'tp' as illustrated here:
-		
 		// read in the current percepts
 		bump = tp.getBump();
 		glitter = tp.getGlitter();
@@ -236,14 +274,19 @@ class AgentFunction {
 		scream = tp.getScream();
 		timestamp++;
 
+		countPits();
+
+		if (stench) {
+			boolean alsoBreeze = false;
+			if (breeze)
+				alsoBreeze = true;
+			markWumpus(alsoBreeze);
+		}
 		if (breeze) {
 			markPit();
 		}
 		if (glitter) {
 			markGold();
-		}
-		if (stench) {
-			markWumpus();
 		}
 		if (!breeze && !stench) {
 			markSafe();
