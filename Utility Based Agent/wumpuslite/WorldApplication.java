@@ -47,7 +47,8 @@ class WorldApplication {
 		// int seed = -1121959140;
 		// int seed = -2134590087;
 		// int seed = -916196900;
-		int seed = 1731461101;
+		// int seed = 1731461101;
+		int seed = 1565233400;
 		
 	    
 		// iterate through command-line parameters

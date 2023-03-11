@@ -29,6 +29,7 @@ class AgentFunction {
 	// all of these variables are created and used
 	// for illustration purposes; you may delete them
 	// when implementing your own intelligent agent
+	private boolean arrowUsed = false;
 	private boolean bump;
 	private boolean glitter;
 	private boolean breeze;
@@ -201,6 +202,22 @@ class AgentFunction {
 		if (nextMove == Action.GO_FORWARD) {
 			goForward();
 		}
+		if (nextMove == Action.SHOOT) {
+			arrowUsed = true;
+			int new_x = x_coordinate;
+			int new_y = y_coordinate	;
+			if (direction == 'E') {
+				new_y += 1;
+			} else if (direction == 'N') {
+				new_x += 1;
+			} else if (direction == 'W') {
+				new_y -= 1;
+			} else {
+				new_x -= 1;
+			}
+			if (isValid(new_x, new_y))
+				state[new_x][new_y] = 0;
+		}
 	}
 
 
@@ -241,7 +258,7 @@ class AgentFunction {
         } catch (Exception e) {
 	    	System.out.println("An exception was thrown: " + e);
 	    }
-		int nextMove = new Search(state, x_coordinate, y_coordinate, direction).nextMove();
+		int nextMove = new Search(state, x_coordinate, y_coordinate, direction, arrowUsed).nextMove();
 		updateAgent(nextMove);
 		// return action to be performed
 	    return nextMove;
