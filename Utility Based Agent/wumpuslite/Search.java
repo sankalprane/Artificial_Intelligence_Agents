@@ -10,13 +10,13 @@ class Search {
     private int maxUtility, numberOfMoves;
     String outFilename = "test.txt";
 
-    public Search(int[][] state, int x, int y, char direction, boolean arrowUsed) {
+    public Search(int[][] probabilityOfPit, int[][] state, int x, int y, char direction, boolean arrowUsed) {
         maxUtility = 0;
         numberOfMoves = 99999;
         if (state[x][y] == 99) {
             bestMove = Action.GRAB;
         } else {
-            dfs(new State(state, direction, x, y, arrowUsed), 0, 0, new ArrayList<>());
+            dfs(new State(probabilityOfPit, state, direction, x, y, arrowUsed), 0, 0, new ArrayList<>());
         }
     }
 
@@ -85,7 +85,7 @@ class Search {
     }
 
     private State onShoot(State currState) {
-        State newState = new State(currState.state, currState.direction, currState.x, currState.y, true);
+        State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, currState.x, currState.y, true);
         int x = currState.x;
         int y = currState.y;
         int direction = currState.direction;
@@ -126,22 +126,27 @@ class Search {
         return new int[]{new_x, new_y};
     }
 
+    // Generate the pruned search tree
     private List<State> generatePossibleStates(State currState, int x, int y) {
         List<State> listOfStates = new ArrayList<State>();
         if (currState.state[x][y] == 0) {
             for (int i = 0; i < possibleEnv.length; i++) {
-                State newState = new State(currState.state, currState.direction, x, y, currState.arrowUsed);
+                State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, x, y, currState.arrowUsed);
                 newState.state[x][y] = possibleEnv[i];
                 listOfStates.add(newState);
                 // newState.print();
             }
         }
         if (currState.state[x][y] == 50 || currState.state[x][y] == 0) {
-            listOfStates.add(new State(currState.state, currState.direction, x, y, currState.arrowUsed));
+            listOfStates.add(new State(currState.knowledgeOfPit, currState.state, currState.direction, x, y, currState.arrowUsed));
         }
         return listOfStates;
     }
 
+
+    /*
+     * Depth limited search with a depth of 10
+     */
     private void dfs(State currState, int depth, int utility, List<Integer> listOfMoves) {
         if (utility >= maxUtility) {
             if (listOfMoves.size() != 0 && listOfMoves.size() < numberOfMoves)
@@ -161,7 +166,7 @@ class Search {
         } catch (Exception e) {
 	    	System.out.println("An exception was thrown: " + e);
 	    }
-        if (depth == 7) {
+        if (depth == 10) {
             return;
         }
         for (int i = 0; i < moves.length; i++) {
@@ -179,17 +184,19 @@ class Search {
             }
             if (moves[i] == Action.TURN_LEFT) {
                 listOfMoves.add(Action.TURN_LEFT);
-                dfs(new State(currState.state, updateDirectionOnLeftMove(currState.direction), currState.x, currState.y, currState.arrowUsed), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
+                dfs(new State(currState.knowledgeOfPit, currState.state, updateDirectionOnLeftMove(currState.direction), currState.x, currState.y, currState.arrowUsed), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
                 listOfMoves.remove(listOfMoves.size() - 1);
             }
             if (moves[i] == Action.TURN_RIGHT) {
                 listOfMoves.add(Action.TURN_RIGHT);
-                dfs(new State(currState.state, updateDirectionOnRightMove(currState.direction), currState.x, currState.y, currState.arrowUsed), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
+                dfs(new State(currState.knowledgeOfPit, currState.state, updateDirectionOnRightMove(currState.direction), currState.x, currState.y, currState.arrowUsed), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
                 listOfMoves.remove(listOfMoves.size() - 1);
             }
+            // Perform Shoot only if arrow is present
             if (moves[i] == Action.SHOOT && currState.arrowUsed == false) {
                 listOfMoves.add(Action.SHOOT);
                 State newState = onShoot(currState);
+                // utility of -10 for shooting arrow.
                 dfs(newState, depth + 1, newState.getUtility(currState.x, currState.y) - 10, listOfMoves);
                 listOfMoves.remove(listOfMoves.size() - 1);
             }

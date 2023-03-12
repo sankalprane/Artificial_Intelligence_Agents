@@ -42,6 +42,8 @@ class AgentFunction {
 	private boolean stench;
 	private boolean scream;
 	private int[][] state = new int[4][4];
+	private int[][] probabilityOfPit = new int[4][4];
+	private int lastMove = Action.NO_OP;
 	private int x_coordinate = 0;
 	private int y_coordinate = 0;
 	private char direction = 'E';
@@ -63,12 +65,14 @@ class AgentFunction {
 	 * If breeze is felt then set the state to 1 which indicates a pit
 	 */
 	private void markPit() {
+		// If the two clusters of pits are discovered. Stop adding new pits
 		if (pitsDiscovered == true) {
 			for (int i = 0; i < 4; i++) {
 				int new_x = x_coordinate + dir_row[i];
 				int new_y = y_coordinate + dir_col[i];
 				if (isValid(new_x, new_y) && state[new_x][new_y] == -1) {
 					state[new_x][new_y] = 0;
+					probabilityOfPit[new_x][new_y] = 0;
 				}
 			}
 			return;
@@ -79,10 +83,17 @@ class AgentFunction {
 			if (isValid(new_x, new_y) && (state[new_x][new_y] == -1 || state[new_x][new_y] == 2)) {
 				state[new_x][new_y] = 1;
 				pitLocations.add(new IntPair(new_x, new_y));
+				if (lastMove == Action.GO_FORWARD) {
+					/*
+					 * Increase the probablity of pit being the square when a breeze is felt.
+					 */
+					probabilityOfPit[new_x][new_y] = probabilityOfPit[new_x][new_y] * 2 + 1;
+				}
 			}
 		}
 	}
 
+	// Remove the wumpus if the scream is heard
 	private void removeWumpus() {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
@@ -93,10 +104,14 @@ class AgentFunction {
 		}
 	}
 
+	// Mark gold is glitter is perceivedxs
 	private void markGold() {
 		state[x_coordinate][y_coordinate] = 99;
 	}
 
+	/*
+	 * Mark all the adjacent squares as safe when no percept is felt.
+	 */
 	private void markSafe() {
 		for (int i = 0; i < 4; i++) {
 			int new_x = x_coordinate + dir_row[i];
@@ -105,8 +120,10 @@ class AgentFunction {
 				if (pitLocations.contains(new IntPair(new_x, new_y))) {
 					pitLocations.remove(new IntPair(new_x, new_y));
 				}
-				if (state[new_x][new_y] != 50)
+				if (state[new_x][new_y] != 50) {
 					state[new_x][new_y] = 0;
+					probabilityOfPit[new_x][new_y] = 0;
+				}
 			}
 		}
 	}
@@ -159,10 +176,11 @@ class AgentFunction {
         } catch (Exception e) {
 	    	System.out.println("An exception was thrown: " + e);
 	    }
-		// initialise state to -1
+		// initialise state to -1 and probability of pit to be 0
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				state[i][j] = -1;
+				probabilityOfPit[i][j] = 0;
 			}
 		}
 		/*
@@ -208,6 +226,7 @@ class AgentFunction {
 		} else {
 			x_coordinate -= 1;
 		}
+		// Mark the square as visited on visiting it.
 		state[x_coordinate][y_coordinate] = 50;
     }
 
@@ -222,6 +241,9 @@ class AgentFunction {
 		if (nextMove == Action.GO_FORWARD) {
 			goForward();
 		}
+		/*
+		 * On shooting mark the next square as safe.
+		 */
 		if (nextMove == Action.SHOOT) {
 			arrowUsed = true;
 			int new_x = x_coordinate;
@@ -240,6 +262,10 @@ class AgentFunction {
 		}
 	}
 
+	/*
+	 * This function uses manhattan distance to find 2 different cluster of pits. So
+	 * that we can stop marking new position as pits.
+	 */
 	private void countPits() {
 		if (pitLocations.size() >= 2) {
 			for (IntPair x : pitLocations) {
@@ -301,8 +327,11 @@ class AgentFunction {
         } catch (Exception e) {
 	    	System.out.println("An exception was thrown: " + e);
 	    }
-		int nextMove = new Search(state, x_coordinate, y_coordinate, direction, arrowUsed).nextMove();
+		int nextMove = new Search(probabilityOfPit, state, x_coordinate, y_coordinate, direction, arrowUsed).nextMove();
 		updateAgent(nextMove);
+
+		// Saves the last move
+		lastMove = nextMove;
 		// return action to be performed
 	    return nextMove;
 	}

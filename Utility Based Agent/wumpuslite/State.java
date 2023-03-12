@@ -3,15 +3,17 @@ import java.io.FileWriter;
 
 class State {
     public int[][] state = new int[4][4];
+    public int[][] knowledgeOfPit = new int[4][4];
     public boolean arrowUsed;
     public int utility, x, y;
     public char direction;
     String outFilename = "test.txt";
 
-    public State(int[][] oldState, char direction, int oldX, int oldY, boolean arrowUsed) {
+    public State(int[][] probabilityOfPit, int[][] oldState, char direction, int oldX, int oldY, boolean arrowUsed) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 state[i][j] = oldState[i][j];
+                knowledgeOfPit[i][j] = probabilityOfPit[i][j];
             }
         }
         this.direction = direction;
@@ -40,6 +42,15 @@ class State {
 	    }
     }
 
+    private boolean isValid(int x, int y) {
+		if (x >= 0 && x < 4 && y >= 0 && y < 4)
+			return true;
+		return false;
+	}
+
+    /*
+     * This is calculated using the values of gold * probability of gold being the square
+     */
     private int utilityOfSafeSquare() {
         int numberOfSafeSquare = 16;
         for (int i = 0; i < 4; i++) {
@@ -51,12 +62,42 @@ class State {
         return (1000 / numberOfSafeSquare);
     }
 
+
+    /*
+     * Using probability calculate the changes of pit being in a square
+     * The utility of the pit is -1000 * probability of pit being the square
+     */
+    private int utilityOfPit(int x, int y) {
+        int cnt = 0;
+        if (isValid(x + 1, y + 1)) {
+            cnt += knowledgeOfPit[x + 1][y + 1];
+        }
+        if (isValid(x + 1, y - 1)) {
+            cnt += knowledgeOfPit[x + 1][y - 1];
+        }
+        if (isValid(x - 1, y + 1)) {
+            cnt += knowledgeOfPit[x - 1][y + 1];
+        }
+        if (isValid(x - 1, y - 1)) {
+            cnt += knowledgeOfPit[x - 1][y - 1];
+        }
+        double value = (1000.0 /(double)cnt) * knowledgeOfPit[x][y];
+        return (int)value;
+    }
+
+
+    /*
+     * Gives the utility of the current state. This in addition with the utility 
+     * equation used in dfs function gives the total utility.
+     */
     public int getUtility(int x, int y) {
         utility = 0;
         if (state[x][y] == 99)
             utility += 1000;
-        if (state[x][y] == 1 || state[x][y] == 2)
+        if (state[x][y] == 2)
             utility -= 1000;
+        if (state[x][y] == 1)
+            utility -= utilityOfPit(x, y);
         if (state[x][y] == 0)
             utility += utilityOfSafeSquare();
         return utility;
