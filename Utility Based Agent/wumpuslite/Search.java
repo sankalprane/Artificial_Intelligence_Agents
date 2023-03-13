@@ -5,7 +5,7 @@ import java.util.List;
 
 class Search {
     private int[] possibleEnv = {1, 2, 0};
-	private int[] moves = {Action.NO_OP, Action.TURN_LEFT, Action.TURN_RIGHT, Action.GO_FORWARD, Action.SHOOT};
+	private int[] moves = {Action.NO_OP, Action.TURN_LEFT, Action.TURN_RIGHT, Action.GO_FORWARD, Action.SHOOT, Action.GRAB};
     private int bestMove = Action.NO_OP;
     private int maxUtility, numberOfMoves;
     String outFilename = "test.txt";
@@ -13,11 +13,7 @@ class Search {
     public Search(int[][] probabilityOfPit, int[][] state, int x, int y, char direction, boolean arrowUsed) {
         maxUtility = 0;
         numberOfMoves = 99999;
-        if (state[x][y] == 99) {
-            bestMove = Action.GRAB;
-        } else {
-            dfs(new State(probabilityOfPit, state, direction, x, y, arrowUsed), 0, 0, new ArrayList<>());
-        }
+        dfs(new State(probabilityOfPit, state, direction, x, y, arrowUsed, false), 0, 0, new ArrayList<>());
     }
 
     public int nextMove() {
@@ -85,7 +81,7 @@ class Search {
     }
 
     private State onShoot(State currState) {
-        State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, currState.x, currState.y, true);
+        State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, currState.x, currState.y, true, currState.grabPerformed);
         int x = currState.x;
         int y = currState.y;
         int direction = currState.direction;
@@ -131,14 +127,14 @@ class Search {
         List<State> listOfStates = new ArrayList<State>();
         if (currState.state[x][y] == 0) {
             for (int i = 0; i < possibleEnv.length; i++) {
-                State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, x, y, currState.arrowUsed);
+                State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, x, y, currState.arrowUsed, currState.grabPerformed);
                 newState.state[x][y] = possibleEnv[i];
                 listOfStates.add(newState);
                 // newState.print();
             }
         }
         if (currState.state[x][y] == 50 || currState.state[x][y] == 0) {
-            listOfStates.add(new State(currState.knowledgeOfPit, currState.state, currState.direction, x, y, currState.arrowUsed));
+            listOfStates.add(new State(currState.knowledgeOfPit, currState.state, currState.direction, x, y, currState.arrowUsed, currState.grabPerformed));
         }
         return listOfStates;
     }
@@ -184,12 +180,12 @@ class Search {
             }
             if (moves[i] == Action.TURN_LEFT) {
                 listOfMoves.add(Action.TURN_LEFT);
-                dfs(new State(currState.knowledgeOfPit, currState.state, updateDirectionOnLeftMove(currState.direction), currState.x, currState.y, currState.arrowUsed), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
+                dfs(new State(currState.knowledgeOfPit, currState.state, updateDirectionOnLeftMove(currState.direction), currState.x, currState.y, currState.arrowUsed, false), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
                 listOfMoves.remove(listOfMoves.size() - 1);
             }
             if (moves[i] == Action.TURN_RIGHT) {
                 listOfMoves.add(Action.TURN_RIGHT);
-                dfs(new State(currState.knowledgeOfPit, currState.state, updateDirectionOnRightMove(currState.direction), currState.x, currState.y, currState.arrowUsed), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
+                dfs(new State(currState.knowledgeOfPit, currState.state, updateDirectionOnRightMove(currState.direction), currState.x, currState.y, currState.arrowUsed, false), depth + 1, currState.getUtility(currState.x, currState.y) - (depth + 1), listOfMoves);
                 listOfMoves.remove(listOfMoves.size() - 1);
             }
             // Perform Shoot only if arrow is present
@@ -198,6 +194,12 @@ class Search {
                 State newState = onShoot(currState);
                 // utility of -10 for shooting arrow.
                 dfs(newState, depth + 1, newState.getUtility(currState.x, currState.y) - 10, listOfMoves);
+                listOfMoves.remove(listOfMoves.size() - 1);
+            }
+            if (moves[i] == Action.GRAB) {
+                listOfMoves.add(Action.GRAB);
+                State newState = new State(currState.knowledgeOfPit, currState.state, currState.direction, currState.x, currState.y, currState.arrowUsed, true);
+                dfs(newState, depth + 1, currState.getUtility(currState.x, currState.y) - 1000, listOfMoves);
                 listOfMoves.remove(listOfMoves.size() - 1);
             }
         }

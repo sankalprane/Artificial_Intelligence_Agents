@@ -7,9 +7,10 @@ class State {
     public boolean arrowUsed;
     public int utility, x, y;
     public char direction;
+    public boolean grabPerformed = false;
     String outFilename = "test.txt";
 
-    public State(int[][] probabilityOfPit, int[][] oldState, char direction, int oldX, int oldY, boolean arrowUsed) {
+    public State(int[][] probabilityOfPit, int[][] oldState, char direction, int oldX, int oldY, boolean arrowUsed, boolean grabPerformed) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 state[i][j] = oldState[i][j];
@@ -21,6 +22,7 @@ class State {
         y= oldY;
         utility = 0;
         this.arrowUsed = arrowUsed;
+        this.grabPerformed = grabPerformed;
     }
 
     public void print() {
@@ -91,6 +93,8 @@ class State {
      * equation used in dfs function gives the total utility.
      */
     public int getUtility(int x, int y) {
+        if (grabPerformed && state[x][y] == 99)
+            return utility = 9999999;
         utility = 0;
         if (state[x][y] == 99)
             utility += 1000;
