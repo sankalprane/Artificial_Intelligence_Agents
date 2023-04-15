@@ -43,8 +43,7 @@ class WorldApplication {
 		String outFilename = "wumpus_out.txt";
 		
 	    Random rand = new Random();
-	    // int seed = rand.nextInt();
-		int seed = -1971168950;
+	    int seed = rand.nextInt();
 		
 	    
 		// iterate through command-line parameters
