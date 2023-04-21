@@ -1,0 +1,108 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2706
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;\f2\fnil\fcharset0 Menlo-Bold;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;\red202\green202\blue202;
+\red183\green111\blue179;\red140\green211\blue254;\red70\green137\blue204;\red67\green192\blue160;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c100000\c100000\c100000;\cssrgb\c83137\c83137\c83137;
+\cssrgb\c77255\c52549\c75294;\cssrgb\c61176\c86275\c99608;\cssrgb\c33725\c61176\c83922;\cssrgb\c30588\c78824\c69020;}
+\margl1440\margr1440\vieww13440\viewh10200\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs36 \cf0 NOTE:  This agent will score well in all continuous range of forward probability and seems to be very rational as the agent will not take a risk.\
+
+\f1\b0 I am trying to figure out if the environment is Non-Deterministic or Deterministic. If the environment is Deterministic then I have used forward search with a utility function, If the environment is Non-Deterministic then I have used a simple reflex agent(condition-action rules). The reason behind using SRA instead of forward search is that it is impossible to keep track of the state of the world, since in most cases we can not figure out if the forward move was successful or if the agent slips to the right or left, so updating the position of the breeze would be close to impossible.
+\f0\b \
+\
+LEARNING LOGIC:
+\f1\b0 \
+The first move is to TURN_RIGHT so the agent is now facing south and is at 1,1.\
+Now keep doing forward search for at most 17 times. The moment the agent does not perceive a bump it means that the environment is Non-Deterministic. If the agent perceives bumps for all 17 times then we can safely conclude that the environment will be Deterministic since the forward probability is 0.8 in one such case, the chance to slip to the left is 10%. Out of 17 moves at least one such moves occurs with a high probability.
+\f0\b \
+\
+To RUN CODE: 
+\f1\b0 \
+1. Delete all the .class files using rm *.class\
+2. To compile use javac WorldApplication.java\
+3. Run using java WorldApplication -a false -n 1 -t 1000\
+4. Run using java WorldApplication -a false -n 0.8 -t 1000\
+4. Run using java WorldApplication -a false -n 0.5 -t 1000\
+\
+
+\f0\b UTILITY if the environment is Deterministic:
+\f1\b0 \
+This function changes how the agent works. I have used Depth Limited Search with a depth of 10. The depth is decided so that any unvisited square can be explored from any given location. For each depth with corresponds to a move. I have given a reward of -1. And for shoot the reward is -10. Since the reward is -1 for each move, the agent will not visit any visited squares as visiting previously visited square will not give any reward. \
+Collocation with a wumpus gives a reward of -1000. \
+For every unvisited square the reward is not fixed. Since the price of the gold is +1000 the value of visiting unvisited square is:\
+
+\f0\b Utility of unvisited square = 1000 / No. of unvisited squares
+\f1\b0 \
+\
+The formula used to count the pit is :\
+
+\f0\b pitCount = pitCount * 2 + 1. 
+\f1\b0 \
+This makes sure that when the breeze is perceived from a different location. The chances of pit being in the particular square increases. \
+\
+The total probability of the pit is calculated by:\
+
+\f0\b probability of pit = 100 / (count of cluster of pit) * count of current pit.
+\f1\b0 \
+\
+To get value of being in the pit, we use\
+
+\f0\b utility of pit = probability of pit * -1000
+\f1\b0 \
+\
+
+\f0\b LOGIC USED: \
+\
+If the environment is Deterministic:\
+
+\f1\b0 The utility of NO_OP is given as 0. We try to take an action that gives the argmax of the utility.\
+\
+The location of the pit is narrowed down using the manhattan distance. If the manhattan distance is greater than 2 then we have discovered 2 clusters of pit. So we can stop marking new pits after perceiving the breeze. This increases our state of knowledge about the world.\
+\
+The Class called as IntPair is used to store the x and y coordinates of the pits. We use a hashset to save the coordinates of the possible pits locations and remove the coordinates once we are sure that the pit is not present there. At the start of each timestamp we calculate the manhattan distance between all the locations of the pits. If for any pit the closest pit is with a distance > 2 then we have found two distinct clusters. Overriding the equal method in this class is used to compare two objects.\
+\
+The State Class is used to store the future and current nodes of the search space. It uses arrowUsed to keep a track of the arrow. It has a probability grid to calculate the probability of the pits. Its has one function to calculate the value of the safe square. The formula is given in the Utility section. It has another function to calculate the risk of entering a pit using probabilities. This is one of the main class of this project.\
+\
+The Search Class is used to explore the tree. It takes the start position of the state as a input and generates a pruned tree to maximize the efficiency. The depth of the tree used in this is 10. This is to make sure that the arrow is not wasted on luck and the space is explored before shooting the arrow.\
+\
+Every function has comments on it to explain the logic used.\
+\
+
+\f0\b If the environment is Non-Deterministic use the below condition-action rules:
+\f2\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 \
+
+\f0\fs36 \cf0 \cb1 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4         \strokec5 if\strokec4  (\strokec6 isDeterministic\strokec4  == \strokec7 false\strokec4 ) \{\
+            \strokec5 if\strokec4  (\strokec6 glitter\strokec4 ) \{\
+                \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 GRAB\strokec4 ;\
+            \}\
+            \strokec5 if\strokec4  (\strokec6 stench\strokec4  && \strokec6 breeze\strokec4 ) \{\
+                \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 NO_OP\strokec4 ;\
+            \}\
+            \strokec5 if\strokec4  (\strokec6 stench\strokec4 ) \{\
+                \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 SHOOT\strokec4 ;\
+            \}\
+            \strokec5 if\strokec4  (\strokec6 breeze\strokec4 ) \{\
+                \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 NO_OP\strokec4 ;\
+            \}\
+            \strokec5 if\strokec4  (\strokec6 scream\strokec4 ) \{\
+                \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 GO_FORWARD\strokec4 ;\
+            \}\
+            \strokec5 if\strokec4  (\strokec6 bump\strokec4 ) \{\
+                \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 TURN_LEFT\strokec4 ;\
+            \}\
+\
+            \strokec5 return\strokec4  \strokec8 Action\strokec4 .\strokec6 GO_FORWARD\strokec4 ; \
+        \}\cb1 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b0\fs36 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \
+\
+}
